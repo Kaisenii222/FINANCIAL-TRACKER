@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Finances</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f12;
+    --surface: #13161b;
+    --surface2: #1a1e25;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.12);
+    --text: #e8eaf0;
+    --muted: #6b7280;
+    --accent: #7dd3fc;
+    --accent2: #34d399;
+    --accent3: #f59e0b;
+    --danger: #f87171;
+    --mono: 'DM Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 14px;
+    min-height: 100vh;
+    padding: 2rem 1.5rem;
+    line-height: 1.6;
+  }
+  .grid { display: grid; gap: 1rem; }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+  }
+  .card-label {
+    font-size: 0.7rem;
+    font-family: var(--mono);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+  .card-value {
+    font-family: var(--mono);
+    font-size: 1.5rem;
+    font-weight: 500;
+  }
+  .card-sub { font-size: 0.75rem; color: var(--muted); margin-top: 0.25rem; }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  header h1 { font-family: var(--mono); font-size: 1.1rem; font-weight: 400; letter-spacing: 0.05em; color: var(--muted); }
+  header h1 span { color: var(--text); }
+  .date-tag { font-family: var(--mono); font-size: 0.72rem; color: var(--muted); }
+
+  .section-title {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+    margin-top: 1.5rem;
+  }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+
+  .fx-row { display: flex; align-items: center; justify-content: space-between; }
+  .fx-rate { font-family: var(--mono); font-size: 1.35rem; font-weight: 500; }
+  .fx-change { font-size: 0.72rem; font-family: var(--mono); }
+  .up { color: var(--accent2); }
+  .down { color: var(--danger); }
+
+  .progress-bar-bg { background: var(--surface2); border-radius: 99px; height: 6px; overflow: hidden; margin: 0.4rem 0; }
+  .progress-bar-fill { height: 100%; border-radius: 99px; transition: width 0.6s ease; }
+  .prog-loan { background: var(--danger); }
+  .prog-emergency { background: var(--accent2); }
+
+  input {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 0.85rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 8px;
+    width: 100%;
+    outline: none;
+  }
+
+  button.btn {
+    background: var(--accent);
+    color: #0d0f12;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1.1rem;
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+  .btn-undo { background: transparent !important; border: 1px solid var(--border2) !important; color: var(--muted) !important; margin-left: 4px; }
+
+  .input-row { display: flex; gap: 0.5rem; align-items: center; margin-top: 0.75rem; }
+  .comparison-label { font-size: 0.68rem; color: var(--accent); margin-top: 6px; font-family: var(--mono); height: 14px; }
+
+  .etf-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; cursor: pointer; transition: border-color 0.2s; }
+  .etf-card:hover { border-color: var(--accent); }
+  .etf-ticker { font-family: var(--mono); font-size: 1rem; font-weight: 500; }
+  .etf-price { font-family: var(--mono); font-size: 1.4rem; font-weight: 500; margin: 0.5rem 0; }
+
+  #tv-chart-container { height: 450px; overflow: hidden; margin-top: 1rem; }
+  .projection-table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 0.78rem; }
+  .projection-table td, .projection-table th { padding: 0.5rem; text-align: left; border-bottom: 1px solid var(--border); }
+  
+  .pill { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 99px; font-family: var(--mono); font-size: 0.68rem; }
+  .pill-blue { background: rgba(125,211,252,0.1); color: var(--accent); }
+  .pill-green { background: rgba(52,211,153,0.1); color: var(--accent2); }
+
+  .toast { position: fixed; bottom: 2rem; right: 2rem; background: var(--surface2); padding: 0.75rem 1.25rem; border-radius: 10px; opacity: 0; transition: 0.3s; z-index: 1000; }
+  .toast.show { opacity: 1; }
+
+  @media (max-width: 640px) { .two-col, .three-col { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>/ <span id="greeting">...</span>, <span style="color:var(--accent)">you</span></h1>
+    <div class="date-tag" id="date-display"></div>
+  </div>
+  <div style="text-align:right">
+    <div class="date-tag" id="fx-status">rates: fetching...</div>
+    <div class="date-tag" style="margin-top:0.25rem" id="etf-status">etfs: fetching...</div>
+  </div>
+</header>
+
+<div class="two-col" style="margin-bottom:1.5rem">
+  <div class="card">
+    <div class="fx-row">
+      <div>
+        <div class="card-label">CAD → PHP</div>
+        <div class="fx-rate" id="cad-rate">—</div>
+      </div>
+      <div class="pill pill-blue">1 CAD</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="fx-row">
+      <div>
+        <div class="card-label">USD → PHP</div>
+        <div class="fx-rate" id="usd-rate">—</div>
+      </div>
+      <div class="pill pill-green">1 USD</div>
+    </div>
+  </div>
+</div>
+
+<div class="three-col" style="margin-bottom:1.5rem">
+  <div class="card">
+    <div class="card-label">monthly income</div>
+    <div class="card-value" style="color:var(--accent2)" id="income-display">₱13,000</div>
+    <div class="input-row">
+      <input type="number" id="income-input" placeholder="update" />
+      <button class="btn" onclick="updateIncome()">set</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-label">disposable</div>
+    <div class="card-value" id="disposable-display">₱11,500</div>
+    <div id="comp-total-note" class="comparison-label"></div>
+  </div>
+  <div class="card">
+    <div class="card-label">market advantage</div>
+    <div id="market-advantage-note" style="font-size:0.75rem; color:var(--accent2); line-height:1.4">Calculating compounding...</div>
+  </div>
+</div>
+
+<div class="section-title">goals & retrack</div>
+<div class="two-col" style="margin-bottom:1.5rem">
+  <div class="card">
+    <div class="card-label">student loan</div>
+    <div class="card-value" style="color:var(--danger)" id="loan-remaining">₱60,000</div>
+    <div class="progress-bar-bg"><div class="progress-bar-fill prog-loan" id="loan-bar" style="width:0%"></div></div>
+    <div class="input-row">
+      <input type="number" id="loan-input" placeholder="pay" />
+      <button class="btn" style="background:var(--danger)" onclick="addLoanPayment()">pay</button>
+      <button class="btn btn-undo" onclick="undoLastLoan()">undo</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-label">emergency fund</div>
+    <div class="card-value" style="color:var(--accent2)" id="emfund-saved">₱0</div>
+    <div class="progress-bar-bg"><div class="progress-bar-fill prog-emergency" id="emfund-bar" style="width:0%"></div></div>
+    <div class="input-row">
+      <input type="number" id="emfund-input" placeholder="save" />
+      <button class="btn" style="background:var(--accent2)" onclick="addEmFund()">save</button>
+      <button class="btn btn-undo" onclick="undoLastEmFund()">undo</button>
+    </div>
+  </div>
+</div>
+
+<div class="section-title">etf portfolio — click to view chart</div>
+<div class="three-col" id="etf-grid">
+  <div class="etf-card" onclick="updateChart('QQQM')">
+    <div class="etf-ticker" style="color:var(--accent)">QQQM</div>
+    <div class="etf-price" id="price-QQQM">—</div>
+    <div class="card-sub" id="shares-QQQM">0.0000 shares</div>
+    <div class="input-row">
+      <input type="number" id="buy-QQQM" step="0.01" placeholder="add" />
+      <button class="btn" onclick="buyShares('QQQM')">add</button>
+      <button class="btn btn-undo" onclick="undoLastETF('QQQM')">undo</button>
+    </div>
+  </div>
+  <div class="etf-card" onclick="updateChart('VOO')">
+    <div class="etf-ticker" style="color:var(--accent2)">VOO</div>
+    <div class="etf-price" id="price-VOO">—</div>
+    <div class="card-sub" id="shares-VOO">0.0000 shares</div>
+    <div class="input-row">
+      <input type="number" id="buy-VOO" step="0.01" placeholder="add" />
+      <button class="btn" style="background:var(--accent2)" onclick="buyShares('VOO')">add</button>
+      <button class="btn btn-undo" onclick="undoLastETF('VOO')">undo</button>
+    </div>
+  </div>
+  <div class="etf-card" onclick="updateChart('VOX')">
+    <div class="etf-ticker" style="color:var(--accent3)">VOX</div>
+    <div class="etf-price" id="price-VOX">—</div>
+    <div class="card-sub" id="shares-VOX">0.0000 shares</div>
+    <div class="input-row">
+      <input type="number" id="buy-VOX" step="0.01" placeholder="add" />
+      <button class="btn" style="background:var(--accent3)" onclick="buyShares('VOX')">add</button>
+      <button class="btn btn-undo" onclick="undoLastETF('VOX')">undo</button>
+    </div>
+  </div>
+</div>
+
+<div id="tv-chart-container" class="card"></div>
+
+<div class="section-title">projections</div>
+<div class="card">
+  <table class="projection-table"><tbody id="proj-body"></tbody></table>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+let state = JSON.parse(localStorage.getItem('finstate')) || {
+  income: 13000,
+  loanTotal: 60000, loanPaid: 0,
+  emFundSaved: 0, emFundTarget: 69000,
+  etfShares: { QQQM: 0, VOO: 0, VOX: 0 },
+  etfCostBasis: { QQQM: 0, VOO: 0, VOX: 0 },
+  loanHistory: [], emHistory: [], etfHistory: []
+};
+let prices = { QQQM: 0, VOO: 0, VOX: 0 };
+let fxRates = { USD: 56.5, CAD: 41.5 };
+
+function save() { localStorage.setItem('finstate', JSON.stringify(state)); }
+
+function getComparisonText(amt) {
+  if (!amt) return "";
+  const meals = Math.floor(amt / 250);
+  return `Equals ~${meals} meals (@₱250)`;
+}
+
+// --- RETRACK FUNCTIONS ---
+function undoLastLoan() {
+  if (state.loanHistory.length > 0) {
+    const last = state.loanHistory.pop();
+    state.loanPaid -= last;
+    save(); refreshUI();
+    toast("Loan entry reversed.");
+  }
+}
+
+function undoLastEmFund() {
+  if (state.emHistory.length > 0) {
+    const last = state.emHistory.pop();
+    state.emFundSaved -= last;
+    save(); refreshUI();
+    toast("Emergency entry reversed.");
+  }
+}
+
+function undoLastETF(ticker) {
+  const lastIdx = state.etfHistory.findLastIndex(h => h.ticker === ticker);
+  if (lastIdx > -1) {
+    const last = state.etfHistory.splice(lastIdx, 1)[0];
+    state.etfShares[ticker] -= last.shares;
+    state.etfCostBasis[ticker] -= (last.shares * last.price);
+    save(); refreshUI();
+    toast(`${ticker} entry reversed.`);
+  }
+}
+
+// --- CHART & NAMES ---
+function updateChart(ticker) {
+  let name = ticker;
+  if (ticker === 'VOO') name = "Vanguard S&P 500 ETF";
+  if (ticker === 'VOX') name = "Vanguard Comm. Services";
+  
+  new TradingView.widget({
+    "autosize": true,
+    "symbol": name,
+    "interval": "D",
+    "theme": "dark",
+    "style": "1",
+    "container_id": "tv-chart-container"
+  });
+}
+
+// --- CORE LOGIC ---
+async function fetchMarket() {
+  try {
+    for (const t of ['QQQM', 'VOO', 'VOX']) {
+      const res = await fetch(`https://query1.finance.yahoo.com/v8/finance/chart/${t}`);
+      const data = await res.json();
+      prices[t] = data.chart.result[0].meta.regularMarketPrice;
+      document.getElementById(`price-${t}`).textContent = '$' + prices[t].toFixed(2);
+    }
+    document.getElementById('etf-status').textContent = 'etfs: live ✓';
+    refreshUI();
+  } catch (e) {
+    document.getElementById('etf-status').textContent = 'etfs: api delay';
+  }
+}
+
+function refreshUI() {
+  const disp = state.income - 1500;
+  document.getElementById('income-display').textContent = '₱' + state.income.toLocaleString();
+  document.getElementById('disposable-display').textContent = '₱' + disp.toLocaleString();
+  document.getElementById('comp-total-note').textContent = getComparisonText(disp);
+
+  const loanPct = (state.loanPaid / state.loanTotal) * 100;
+  document.getElementById('loan-remaining').textContent = '₱' + (state.loanTotal - state.loanPaid).toLocaleString();
+  document.getElementById('loan-bar').style.width = loanPct + '%';
+
+  const emPct = Math.min((state.emFundSaved / state.emFundTarget) * 100, 100);
+  document.getElementById('emfund-saved').textContent = '₱' + state.emFundSaved.toLocaleString();
+  document.getElementById('emfund-bar').style.width = emPct + '%';
+
+  let totalUSD = 0;
+  for (const t of ['QQQM','VOO','VOX']) {
+    totalUSD += state.etfShares[t] * (prices[t] || 0);
+    document.getElementById(`shares-${t}`).textContent = state.etfShares[t].toFixed(4) + ' shares';
+  }
+
+  const futureVal = totalUSD * Math.pow(1.08, 10);
+  document.getElementById('market-advantage-note').innerHTML = 
+    `10yr Projection (8%): <span style="color:var(--text)">$${futureVal.toFixed(2)}</span><br>` +
+    `Compound Gain: <span style="color:var(--accent)">+$${(futureVal - totalUSD).toFixed(2)}</span>`;
+
+  renderProjections(disp);
+}
+
+function renderProjections(disp) {
+  const tbody = document.getElementById('proj-body');
+  tbody.innerHTML = '<tr><th>Timeline</th><th>Est. Savings</th><th>Status</th></tr>';
+  [3, 6, 12, 24].forEach(mo => {
+    const saved = state.emFundSaved + (disp * 0.2 * mo);
+    const row = `<tr><td>${mo} Months</td><td>₱${Math.round(saved).toLocaleString()}</td><td>${saved >= state.emFundTarget ? '✓ Target' : 'Building'}</td></tr>`;
+    tbody.innerHTML += row;
+  });
+}
+
+function updateIncome() {
+  const val = parseFloat(document.getElementById('income-input').value);
+  if (val > 0) { state.income = val; save(); refreshUI(); toast("Income set."); }
+}
+
+function addLoanPayment() {
+  const val = parseFloat(document.getElementById('loan-input').value);
+  if (val > 0) { state.loanPaid += val; state.loanHistory.push(val); save(); refreshUI(); toast("Payment added."); }
+}
+
+function addEmFund() {
+  const val = parseFloat(document.getElementById('emfund-input').value);
+  if (val > 0) { state.emFundSaved += val; state.emHistory.push(val); save(); refreshUI(); toast("Saved."); }
+}
+
+function buyShares(ticker) {
+  const val = parseFloat(document.getElementById(`buy-${ticker}`).value);
+  if (val > 0 && prices[ticker]) {
+    state.etfShares[ticker] += val;
+    state.etfHistory.push({ ticker, shares: val, price: prices[ticker] });
+    save(); refreshUI(); toast(`${ticker} added.`);
+  }
+}
+
+function toast(m) {
+  const t = document.getElementById('toast');
+  t.textContent = m; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// Init
+const now = new Date();
+document.getElementById('greeting').textContent = now.getHours() < 12 ? 'good morning' : 'good evening';
+document.getElementById('date-display').textContent = now.toDateString();
+fetchMarket();
+updateChart('VOO');
+refreshUI();
+</script>
+</body>
+</html>
